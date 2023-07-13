@@ -59,7 +59,7 @@ module.exports = (io, socket) => {
         getMessages()
     }
 
-    // регистрируем обработчики
+    // регистрируем обработчики.
     socket.on('message:get', getMessages)
     socket.on('message:add', addMessage)
     socket.on('message:remove', removeMessage)
