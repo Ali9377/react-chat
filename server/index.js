@@ -1,43 +1,49 @@
 const server = require('http').createServer()
-
+// подключаем к серверу Socket.IO
 const io = require('socket.io')(server, {
-    cors: {
-        origin: '*'
-    }
+  cors: {
+    origin: '*'
+  }
 })
 
-const log =console.log
+const log = console.log
 
-// получаем обработчик событий
+// получаем обработчики событий
 const registerMessageHandlers = require('./handlers/messageHandlers')
 const registerUserHandlers = require('./handlers/userHandlers')
 
-// данная функция будет выполнятся при подключении каждого соккета
+// данная функция выполняется при подключении каждого сокета (обычно, один клиент = один сокет)
 const onConnection = (socket) => {
-    log('Пользователь подключён')
-    
-    // получем название комнаты из строки запроса "рукопожатия" handlers?
-    const { roomId } = socket.handsnake.query
-    // сохраняем название комнаты в соответствующем свойстве сокета
-    socket.roomId = roomId
+  // выводим сообщение о подключении пользователя
+  log('User connected')
 
-    // присоединяемся к комнате 
-    socket.join(roomId)
+  // получаем название комнаты из строки запроса "рукопожатия"
+  const { roomId } = socket.handshake.query
+  // сохраняем название комнаты в соответствующем свойстве сокета
+  socket.roomId = roomId
 
-    // регистрируем обработчик 
-    registerMessageHandlers(io, socket)
-    registerUserHandlers(io, socket)
+  // присоединяемся к комнате (входим в нее)
+  socket.join(roomId)
 
-    // обрабатываем отключение сокета-пользователя
-    socket.on('disconnect', () => {
-        log('Пользователь вышел')
-        socket.leave(roomId)
-    })
+  // регистрируем обработчики
+  // обратите внимание на передаваемые аргументы
+  registerMessageHandlers(io, socket)
+  registerUserHandlers(io, socket)
+
+  // обрабатываем отключение сокета-пользователя
+  socket.on('disconnect', () => {
+    // выводим сообщение
+    log('User disconnected')
+    // покидаем комнату
+    socket.leave(roomId)
+  })
 }
 
+// обрабатываем подключение
 io.on('connection', onConnection)
 
-const PORT = process.env.PORT || 5000 
+// запускаем сервер
+const PORT = process.env.PORT || 5000
 server.listen(PORT, () => {
-    console.log(`Сервер запушен. Порт: ${PORT}`)
+  console.log(`Server ready. Port: ${PORT}`)
 })
